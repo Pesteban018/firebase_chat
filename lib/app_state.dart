@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart'; // new
 import 'package:firebase_auth/firebase_auth.dart'
     hide EmailAuthProvider, PhoneAuthProvider;
 import 'package:firebase_core/firebase_core.dart';
@@ -7,28 +8,24 @@ import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 
 class ApplicationState extends ChangeNotifier {
-  ApplicationState() {
-    init();
-  }
+  get loggedIn => null;
 
-  bool _loggedIn = false;
-  bool get loggedIn => _loggedIn;
+  // Current content of ApplicationState elided ...
 
-  Future<void> init() async {
-    await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform);
+  // Add from here...
+  Future<DocumentReference> addMessageToGuestBook(String message) {
+    if (!loggedIn) {
+      throw Exception('Must be logged in');
+    }
 
-    FirebaseUIAuth.configureProviders([
-      EmailAuthProvider(),
-    ]);
-
-    FirebaseAuth.instance.userChanges().listen((user) {
-      if (user != null) {
-        _loggedIn = true;
-      } else {
-        _loggedIn = false;
-      }
-      notifyListeners();
+    return FirebaseFirestore.instance
+        .collection('guestbook')
+        .add(<String, dynamic>{
+      'text': message,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'name': FirebaseAuth.instance.currentUser!.displayName,
+      'userId': FirebaseAuth.instance.currentUser!.uid,
     });
   }
+  // ...to here.
 }
